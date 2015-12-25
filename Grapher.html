@@ -3,14 +3,18 @@
 
 Nomograms! are cool. They generalize 
 
-<input type="text" id="myText" value="x x +"></input>
-<p id="jsErr">no error yet...</p>
-<button type="button" id="myBtn" onclick="gosam()">Try it</button>
-<canvas height="128" id="myCanvas" style="border: 1px solid #c3c3c3;" width="640"></canvas>
+<input type="text" id="myText" value="x x +" size="64"></input>
+<p><button type="button" id="myBtn" onclick="gosam()">Try it</button></p>
+<canvas height="480" id="myCanvas" style="border: 1px solid #c3c3c3;" width="640"></canvas>
+<p id="jsErr1">no error yet...</p>
+<p id="jsErr2">no error yet...</p>
+<p id="jsErr3">no error yet...</p>
+<p id="jsErr4">no error yet...</p>
+<p id="jsErr5">no error yet...</p>
 
 <script>
-function complain(mystring) {
-  document.getElementById("jsErr").innerHTML += mystring;
+function complain(mystring, which) {
+  document.getElementById("jsErr"+which).innerHTML = mystring;
 }
 function parse(polish) {
    /*eats an array e.g. ['x','x','sin','+'],
@@ -22,30 +26,42 @@ function parse(polish) {
 	  }
    }
    var eaten=parse(polish.slice(1,polish.length));
+   //TODO: generalize to nonaries,unaries,binaries,trinaries,etc. then can uniformly implement below by looping over arg.s
+   var unaries = {"sin":Math.sin,"cos":Math.cos,"log":Math.log,"exp":Math.exp};
+   var binaries = {"+":function(x,y){return x+y;},"*":function(x,y){return x*y;},
+                   "-":function(x,y){return y-x;},"/":function(x,y){return y/x;}}; //TODO: figure out intuitive order!
    if(polish[0]=="x") {
       return function(mystack,myx) {
 	     return eaten(mystack.concat([myx]), myx);
 	  }
-   } else if(polish[0]=="sin") {
+   } if(polish[0]==Number(polish[0])) {
+      return function(mystack,myx) {
+	     return eaten(mystack.concat([Number(polish[0])]), myx);
+	  }
+   } else if(polish[0] in unaries) {
+      var func=unaries[polish[0]];
       return function(mystack,myx) {
 	     var top=mystack[mystack.length-1];
 	     var popped=mystack.slice(0,mystack.length-1);
-	     return eaten(popped.concat([Math.sin(top)]), myx);
+	     return eaten(popped.concat([func(top)]), myx);
 	  }
-   } else if(polish[0]=="+") {
+   } else if(polish[0] in binaries) {
+      var func=binaries[polish[0]];
       return function(mystack,myx) {
 	     var top1=mystack[mystack.length-1];
 		 var top2=mystack[mystack.length-2];
 		 var popped2=mystack.slice(0,mystack.length-2);
-	     return eaten(popped2.concat([top1+top2]), myx);
+	     return eaten(popped2.concat([func(top1,top2)]), myx);
 	  }
-   } else {complain("error!");}
+   } else {complain("(error: unknown component in expression)",1); /*e.g. trigger by x x woah*/}
 }
 function getfunc() {
    polish=document.getElementById("myText").value.split(" ");
    stackoperator=parse(polish);
    return function(myx) {
-      return stackoperator([],myx)[0];
+      var mystack=stackoperator([],myx);
+	  if(mystack.length!=1) {complain("(error: nongrammatical expression)",2); /*e.g. trigger by x x x +*/}
+	  return mystack[0];
    }
 }
 function clearcanvas(canvas, context) {
@@ -56,11 +72,11 @@ function graph(myfunc) {
    var c = document.getElementById("myCanvas");
    context = c.getContext("2d");
    clearcanvas(c,context);
-   context.fillStyle ="#FF0000";
    context.moveTo(0,myfunc(0));
    for(i=1; i<640;++i) {
       context.lineTo(i,myfunc(i));
    }
+   context.strokeStyle="#ff0000";
    context.stroke();
 }
 function gosam() {
