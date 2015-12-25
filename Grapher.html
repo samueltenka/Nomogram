@@ -30,6 +30,8 @@ function parse(polish) {
    var unaries = {"sin":Math.sin,"cos":Math.cos,"log":Math.log,"exp":Math.exp};
    var binaries = {"+":function(x,y){return x+y;},"*":function(x,y){return x*y;},
                    "-":function(x,y){return y-x;},"/":function(x,y){return y/x;}}; //TODO: figure out intuitive order!
+				   //sqrt is x log 2 / exp
+				   //absolute value is x x * log 2 / exp
    if(polish[0]=="x") {
       return function(mystack,myx) {
 	     return eaten(mystack.concat([myx]), myx);
@@ -72,9 +74,9 @@ function graph(myfunc) {
    var c = document.getElementById("myCanvas");
    context = c.getContext("2d");
    clearcanvas(c,context);
-   context.moveTo(0,myfunc(0));
+   context.moveTo(0,480-myfunc(0-320)-240);
    for(i=1; i<640;++i) {
-      context.lineTo(i,myfunc(i));
+      context.lineTo(i,480-myfunc(i-320)-240);
    }
    context.strokeStyle="#ff0000";
    context.stroke();
