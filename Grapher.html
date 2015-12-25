@@ -1,0 +1,80 @@
+<html>
+<body>
+
+Nomograms! are cool. They generalize 
+
+<input type="text" id="myText" value="x x +"></input>
+<p id="jsErr">no error yet...</p>
+<button type="button" id="myBtn" onclick="gosam()">Try it</button>
+<canvas height="100" id="myCanvas" style="border: 1px solid #c3c3c3;" width="640"></canvas>
+
+<script>
+// e.g.:
+//x
+//x sin
+//x
+//x y +
+function complain(mystring) {
+  document.getElementById("jsErr").innerHTML += mystring;
+}
+function parse(polish) {
+   /*eats an array e.g. ['x','x','sin','+'],
+     and outputs an operator on stacks,
+	 as well as a new array e.g. ['x','sin','+']*/
+   if(polish.length==0) {
+      complain("len0");
+      return function(mystack,myx) {
+	     return mystack;
+	  }
+   }
+   var eaten=parse(polish.slice(1,polish.length));
+   if(polish[0]=="x") {
+      return function(mystack,myx) {
+	     return eaten(mystack.concat([myx]), myx);
+	  }
+   } else if(polish[0]=="sin") {
+      return function(mystack,myx) {
+	     var top=mystack[mystack.length-1];
+	     var popped=mystack.slice(0,mystack.length-1);
+	     return eaten(popped.concat([Math.sin(top)]), myx);
+	  }
+   } else if(polish[0]=="+") {
+      return function(mystack,myx) {
+	     var top1=mystack[mystack.length-1];
+		 var top2=mystack[mystack.length-2];
+		 var popped2=mystack.slice(0,mystack.length-2);
+	     return eaten(popped2.concat([top1+top2]), myx);
+	  }
+   } else {complain("error!");}
+}
+function getfunc() {
+   polish=document.getElementById("myText").value.split(" ");
+   stackoperator=parse(polish);
+   complain(polish);
+   //stackoperator=function(stack,myx) {return mystack.concat([myx])};
+   complain(stackoperator);
+   return function(myx) {
+      return stackoperator([],myx)[0];
+   }
+   //return function(myx) {
+   //   return myx+Math.sin(myx);
+   //}
+}
+function graph(myfunc) {
+   var c = document.getElementById("myCanvas");
+   var ctx = c.getContext("2d");
+   ctx.fillStyle = "#FF0000";
+   ctx.moveTo(0,myfunc(0));
+   for(i=1; i<640;++i) {
+      ctx.lineTo(i,myfunc(i));
+   }
+   ctx.stroke();
+}
+function gosam() {
+   //complain("woah!");
+   graph(getfunc());
+}
+</script>
+
+</body>
+</html>
